@@ -1,0 +1,168 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Band {
+  id                       String           @id @default(uuid())
+  name                     String           @db.VarChar(255)
+  email                    String           @unique @db.VarChar(255)
+  stripe_connect_id        String?          @db.VarChar(255)
+  bandsintown_id           String?          @db.VarChar(255)
+  songkick_id              String?          @db.VarChar(255)
+  average_rating           Decimal          @default(0) @db.Decimal(2, 1)
+  total_bounties_fulfilled Int              @default(0)
+  total_earned             Int              @default(0)
+  default_request_cutoff   Int              @default(0)
+  created_at               DateTime         @default(now())
+  updated_at               DateTime         @updatedAt
+  shows                    Show[]
+  repertoire               BandRepertoire[]
+  blacklist                BandBlacklist[]
+}
+
+model Show {
+  id                  String     @id @default(uuid())
+  band_id             String
+  venue_name          String     @db.VarChar(255)
+  venue_address       String     @db.Text
+  venue_lat           Decimal?   @db.Decimal(10, 8)
+  venue_lng           Decimal?   @db.Decimal(11, 8)
+  start_time          DateTime
+  end_time            DateTime
+  status              ShowStatus @default(created)
+  request_cutoff      Int?
+  requests_locked_at  DateTime?
+  settlement_deadline DateTime?
+  source              ShowSource @default(manual)
+  external_show_id    String?    @db.VarChar(255)
+  qr_code_url         String?    @db.Text
+  share_url           String?    @unique @db.Text
+  created_at          DateTime   @default(now())
+  updated_at          DateTime   @updatedAt
+  band                Band       @relation(fields: [band_id], references: [id])
+  bounties            Bounty[]
+}
+
+enum ShowStatus {
+  synced
+  created
+  live
+  settling
+  ended
+}
+
+enum ShowSource {
+  manual
+  bandsintown
+  songkick
+}
+
+model Song {
+  id          String           @id @default(uuid())
+  title       String           @db.VarChar(255)
+  artist      String           @db.VarChar(255)
+  external_id String?          @db.VarChar(255)
+  genre_tags  String[]
+  created_at  DateTime         @default(now())
+  bounties    Bounty[]
+  repertoire  BandRepertoire[]
+  blacklist   BandBlacklist[]
+}
+
+model Bounty {
+  id                  String         @id @default(uuid())
+  show_id             String
+  song_id             String
+  status              BountyStatus   @default(open)
+  total_amount        Int            @default(0)
+  backer_count        Int            @default(0)
+  average_rating      Decimal?       @db.Decimal(2, 1)
+  settlement_deadline DateTime?
+  created_at          DateTime       @default(now())
+  updated_at          DateTime       @updatedAt
+  show                Show           @relation(fields: [show_id], references: [id])
+  song                Song           @relation(fields: [song_id], references: [id])
+  contributions       Contribution[]
+}
+
+enum BountyStatus {
+  open
+  settling
+  completed
+  refunded
+}
+
+model Contribution {
+  id                       String             @id @default(uuid())
+  bounty_id                String
+  fan_id                   String?
+  amount                   Int
+  tip_amount               Int                @default(0)
+  rating                   Int?
+  fan_vote                 FanVote            @default(no_response)
+  stripe_payment_intent_id String             @db.VarChar(255)
+  status                   ContributionStatus @default(authorized)
+  created_at               DateTime           @default(now())
+  updated_at               DateTime           @updatedAt
+  bounty                   Bounty             @relation(fields: [bounty_id], references: [id])
+  fan                      Fan?               @relation(fields: [fan_id], references: [id])
+}
+
+enum FanVote {
+  yes
+  no
+  left_early
+  no_response
+}
+
+enum ContributionStatus {
+  authorized
+  captured
+  refunded
+}
+
+model BandRepertoire {
+  id         String   @id @default(uuid())
+  band_id    String
+  song_id    String
+  created_at DateTime @default(now())
+  band       Band     @relation(fields: [band_id], references: [id])
+  song       Song     @relation(fields: [song_id], references: [id])
+
+  @@unique([band_id, song_id])
+}
+
+model BandBlacklist {
+  id         String   @id @default(uuid())
+  band_id    String
+  song_id    String
+  created_at DateTime @default(now())
+  band       Band     @relation(fields: [band_id], references: [id])
+  song       Song     @relation(fields: [song_id], references: [id])
+
+  @@unique([band_id, song_id])
+}
+
+model Fan {
+  id            String         @id @default(uuid())
+  phone         String?        @db.VarChar(20)
+  email         String?        @db.VarChar(255)
+  created_at    DateTime       @default(now())
+  contributions Contribution[]
+}
+
+model Venue {
+  id         String   @id @default(uuid())
+  name       String   @db.VarChar(255)
+  address    String   @db.Text
+  lat        Decimal  @db.Decimal(10, 8)
+  lng        Decimal  @db.Decimal(11, 8)
+  slug       String   @unique @db.VarChar(255)
+  created_at DateTime @default(now())
+}
