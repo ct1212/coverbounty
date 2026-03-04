@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
-import { stripe } from '@/lib/stripe'
 import { emitToShow } from '@/lib/socket'
 
 export async function POST(
@@ -10,7 +9,7 @@ export async function POST(
   try {
     const { id } = await params
     const body = await request.json()
-    const { amount, tip_amount, fan_email, fan_id } = body
+    const { amount, tip_amount, fan_email, payment_intent_id } = body
 
     if (!amount || amount < 100) {
       return NextResponse.json(
@@ -35,35 +34,55 @@ export async function POST(
       )
     }
 
-    const totalCharge = amount + (tip_amount ?? 0)
-    let stripePaymentIntentId: string
+    // Resolve payment intent ID
+    const stripePaymentIntentId =
+      payment_intent_id ??
+      `pi_mock_${Date.now()}_${Math.random().toString(36).slice(2)}`
 
-    if (process.env.STRIPE_SECRET_KEY && process.env.STRIPE_SECRET_KEY !== 'sk_test_placeholder') {
-      // Create a real PaymentIntent with manual capture (authorization hold)
-      const paymentIntent = await stripe.paymentIntents.create({
-        amount: totalCharge,
-        currency: 'usd',
-        capture_method: 'manual',
-        metadata: {
-          bounty_id: id,
-          show_id: bounty.show_id,
-          song_title: bounty.song.title,
-        },
-        ...(fan_email ? { receipt_email: fan_email } : {}),
+    // Idempotency: check if this PI was already recorded
+    if (payment_intent_id) {
+      const existing = await prisma.contribution.findFirst({
+        where: { stripe_payment_intent_id: payment_intent_id },
       })
-      stripePaymentIntentId = paymentIntent.id
-    } else {
-      // Mock PaymentIntent for development
-      stripePaymentIntentId = `pi_mock_${Date.now()}_${Math.random().toString(36).slice(2)}`
+      if (existing) {
+        const existingBounty = await prisma.bounty.findUnique({
+          where: { id },
+          include: { song: true },
+        })
+        return NextResponse.json(
+          { data: { contribution: existing, bounty: existingBounty } },
+          { status: 200 },
+        )
+      }
     }
 
-    // Resolve or create fan record
-    let resolvedFanId = fan_id ?? null
+    // Resolve fan: by session cookie token or email
+    let resolvedFanId: string | null = null
+
+    // Check fan session cookie
+    const fanSessionToken = request.cookies.get('cb_fan_session')?.value
+    if (fanSessionToken) {
+      const fan = await prisma.fan.findUnique({
+        where: { fan_session_token: fanSessionToken },
+      })
+      if (fan) resolvedFanId = fan.id
+    }
+
+    // Fallback: create fan from email
     if (!resolvedFanId && fan_email) {
       const fan = await prisma.fan.upsert({
-        where: { id: fan_id ?? '' },
+        where: { fan_session_token: fan_email },
         update: {},
-        create: { email: fan_email },
+        create: { email: fan_email, fan_session_token: fan_email },
+      })
+      resolvedFanId = fan.id
+    }
+
+    // If still no fan, create anonymous
+    if (!resolvedFanId) {
+      const newToken = crypto.randomUUID()
+      const fan = await prisma.fan.create({
+        data: { fan_session_token: newToken },
       })
       resolvedFanId = fan.id
     }

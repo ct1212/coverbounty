@@ -16,13 +16,21 @@ export default function Home() {
           Real-time crowdfunding for live music setlists. Fans pool money to
           request songs. Bands get paid when they play them.
         </p>
-        <Link
-          href="/show/demo"
-          className="mt-8 inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-6 py-3 text-base font-semibold text-white transition-opacity hover:opacity-90 active:opacity-70"
-        >
-          <Zap size={18} />
-          See a Live Demo
-        </Link>
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+          <Link
+            href="/show/demo"
+            className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-6 py-3 text-base font-semibold text-white transition-opacity hover:opacity-90 active:opacity-70"
+          >
+            <Zap size={18} />
+            See a Live Demo
+          </Link>
+          <Link
+            href="/band"
+            className="inline-flex items-center gap-2 rounded-xl bg-zinc-800 px-6 py-3 text-base font-semibold text-zinc-300 transition-opacity hover:opacity-90 active:opacity-70"
+          >
+            Band Dashboard
+          </Link>
+        </div>
       </header>
 
       {/* How it works */}

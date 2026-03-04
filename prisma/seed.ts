@@ -1,9 +1,12 @@
 import { PrismaClient } from '@prisma/client'
+import bcrypt from 'bcryptjs'
 
 const prisma = new PrismaClient()
 
 async function main() {
   console.log('Seeding database...')
+
+  const demoPassword = await bcrypt.hash('demo1234', 10)
 
   // --- Songs ---
   const songs = await Promise.all([
@@ -169,6 +172,7 @@ async function main() {
       id: 'band-midnight-riders',
       name: 'The Midnight Riders',
       email: 'contact@midnightriders.com',
+      password_hash: demoPassword,
       average_rating: 4.5,
       total_bounties_fulfilled: 12,
       total_earned: 145000,
@@ -183,6 +187,7 @@ async function main() {
       id: 'band-electric-storm',
       name: 'Electric Storm',
       email: 'hello@electricstorm.band',
+      password_hash: demoPassword,
       average_rating: 4.2,
       total_bounties_fulfilled: 8,
       total_earned: 89000,
@@ -197,6 +202,7 @@ async function main() {
       id: 'band-velvet-echoes',
       name: 'The Velvet Echoes',
       email: 'info@velvetechoes.com',
+      password_hash: demoPassword,
       average_rating: 4.8,
       total_bounties_fulfilled: 22,
       total_earned: 278000,
