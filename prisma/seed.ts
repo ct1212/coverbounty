@@ -164,15 +164,24 @@ async function main() {
 
   console.log(`Created ${songs.length} songs`)
 
-  // --- Bands ---
+  // --- Users + Bands ---
+  const user1 = await prisma.user.upsert({
+    where: { id: 'user-midnight-riders' },
+    update: {},
+    create: {
+      id: 'user-midnight-riders',
+      name: 'Midnight Riders',
+      email: 'contact@midnightriders.com',
+      password_hash: demoPassword,
+    },
+  })
   const band1 = await prisma.band.upsert({
     where: { id: 'band-midnight-riders' },
     update: {},
     create: {
       id: 'band-midnight-riders',
       name: 'The Midnight Riders',
-      email: 'contact@midnightriders.com',
-      password_hash: demoPassword,
+      user_id: user1.id,
       average_rating: 4.5,
       total_bounties_fulfilled: 12,
       total_earned: 145000,
@@ -180,14 +189,23 @@ async function main() {
     },
   })
 
+  const user2 = await prisma.user.upsert({
+    where: { id: 'user-electric-storm' },
+    update: {},
+    create: {
+      id: 'user-electric-storm',
+      name: 'Electric Storm',
+      email: 'hello@electricstorm.band',
+      password_hash: demoPassword,
+    },
+  })
   const band2 = await prisma.band.upsert({
     where: { id: 'band-electric-storm' },
     update: {},
     create: {
       id: 'band-electric-storm',
       name: 'Electric Storm',
-      email: 'hello@electricstorm.band',
-      password_hash: demoPassword,
+      user_id: user2.id,
       average_rating: 4.2,
       total_bounties_fulfilled: 8,
       total_earned: 89000,
@@ -195,14 +213,23 @@ async function main() {
     },
   })
 
+  const user3 = await prisma.user.upsert({
+    where: { id: 'user-velvet-echoes' },
+    update: {},
+    create: {
+      id: 'user-velvet-echoes',
+      name: 'Velvet Echoes',
+      email: 'info@velvetechoes.com',
+      password_hash: demoPassword,
+    },
+  })
   const band3 = await prisma.band.upsert({
     where: { id: 'band-velvet-echoes' },
     update: {},
     create: {
       id: 'band-velvet-echoes',
       name: 'The Velvet Echoes',
-      email: 'info@velvetechoes.com',
-      password_hash: demoPassword,
+      user_id: user3.id,
       average_rating: 4.8,
       total_bounties_fulfilled: 22,
       total_earned: 278000,

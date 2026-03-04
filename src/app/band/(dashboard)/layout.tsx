@@ -11,7 +11,11 @@ export default async function BandLayout({
   const session = await auth()
 
   if (!session?.user) {
-    redirect('/band/login')
+    redirect('/login')
+  }
+
+  if (!session.user.bandId) {
+    redirect('/shows')
   }
 
   return (
@@ -36,7 +40,7 @@ export default async function BandLayout({
               action={async () => {
                 'use server'
                 const { signOut } = await import('@/lib/auth')
-                await signOut({ redirectTo: '/band/login' })
+                await signOut({ redirectTo: '/login' })
               }}
             >
               <button

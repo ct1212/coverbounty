@@ -1,12 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { auth } from '@/lib/auth'
 import QRCode from 'qrcode'
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
-    const band_id = searchParams.get('band_id')
+    let band_id = searchParams.get('band_id')
     const status = searchParams.get('status')
+
+    // Resolve _self to the authenticated user's bandId
+    if (band_id === '_self') {
+      const session = await auth()
+      band_id = session?.user?.bandId ?? null
+    }
 
     const shows = await prisma.show.findMany({
       where: {

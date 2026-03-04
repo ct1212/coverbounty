@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/db'
 import { notFound } from 'next/navigation'
 import BountyBoard from '@/components/bounty/BountyBoard'
+import { autoEndShowIfExpired } from '@/lib/show-lifecycle'
 
 export default async function ShowPage({
   params,
@@ -26,6 +27,15 @@ export default async function ShowPage({
   })
 
   if (!show) notFound()
+
+  // Auto-end show if past end_time
+  if (show.status === 'live' && show.end_time <= new Date()) {
+    const ended = await autoEndShowIfExpired(show.id)
+    if (ended) {
+      // Re-read status after transition
+      show.status = 'settling'
+    }
+  }
 
   const showData = {
     id: show.id,

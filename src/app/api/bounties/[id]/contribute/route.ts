@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { emitToShow } from '@/lib/socket'
+import { auth } from '@/lib/auth'
 
 export async function POST(
   request: NextRequest,
@@ -56,42 +57,15 @@ export async function POST(
       }
     }
 
-    // Resolve fan: by session cookie token or email
-    let resolvedFanId: string | null = null
-
-    // Check fan session cookie
-    const fanSessionToken = request.cookies.get('cb_fan_session')?.value
-    if (fanSessionToken) {
-      const fan = await prisma.fan.findUnique({
-        where: { fan_session_token: fanSessionToken },
-      })
-      if (fan) resolvedFanId = fan.id
-    }
-
-    // Fallback: create fan from email
-    if (!resolvedFanId && fan_email) {
-      const fan = await prisma.fan.upsert({
-        where: { fan_session_token: fan_email },
-        update: {},
-        create: { email: fan_email, fan_session_token: fan_email },
-      })
-      resolvedFanId = fan.id
-    }
-
-    // If still no fan, create anonymous
-    if (!resolvedFanId) {
-      const newToken = crypto.randomUUID()
-      const fan = await prisma.fan.create({
-        data: { fan_session_token: newToken },
-      })
-      resolvedFanId = fan.id
-    }
+    // Resolve user from NextAuth session (anonymous contributions still work)
+    const session = await auth()
+    const resolvedUserId: string | null = session?.user?.id ?? null
 
     const [contribution] = await prisma.$transaction([
       prisma.contribution.create({
         data: {
           bounty_id: id,
-          fan_id: resolvedFanId,
+          user_id: resolvedUserId,
           amount,
           tip_amount: tip_amount ?? 0,
           stripe_payment_intent_id: stripePaymentIntentId,

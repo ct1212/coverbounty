@@ -10,8 +10,14 @@ export async function POST(_request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const bandId = session.user.bandId
+    if (!bandId) {
+      return NextResponse.json({ error: 'No band associated with this account' }, { status: 403 })
+    }
+
     const band = await prisma.band.findUnique({
-      where: { id: session.user.id },
+      where: { id: bandId },
+      include: { user: { select: { email: true } } },
     })
 
     if (!band) {
@@ -40,7 +46,7 @@ export async function POST(_request: NextRequest) {
 
     const account = await stripe.accounts.create({
       type: 'express',
-      email: band.email,
+      email: band.user?.email,
       metadata: { band_id: band.id },
       capabilities: {
         card_payments: { requested: true },

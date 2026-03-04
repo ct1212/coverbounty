@@ -13,7 +13,7 @@ export default function NewShow() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    if (!session?.user?.id) return
+    if (!session?.user?.bandId) return
 
     setError('')
     setLoading(true)
@@ -25,7 +25,7 @@ export default function NewShow() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          band_id: session.user.id,
+          band_id: session.user.bandId,
           venue_name: form.get('venue_name'),
           venue_address: form.get('venue_address'),
           start_time: form.get('start_time'),

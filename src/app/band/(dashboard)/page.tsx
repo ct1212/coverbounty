@@ -28,7 +28,8 @@ export default async function BandDashboard() {
   const session = await auth()
   if (!session?.user) return null
 
-  const bandId = session.user.id
+  const bandId = session.user.bandId
+  if (!bandId) return null
 
   const [band, shows] = await Promise.all([
     prisma.band.findUnique({ where: { id: bandId } }),

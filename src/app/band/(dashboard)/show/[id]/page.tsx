@@ -24,12 +24,13 @@ export default async function ShowDetail({
   params: Promise<{ id: string }>
 }) {
   const session = await auth()
-  if (!session?.user) redirect('/band/login')
+  if (!session?.user) redirect('/login')
+  if (!session.user.bandId) redirect('/shows')
 
   const { id } = await params
 
   const show = await prisma.show.findUnique({
-    where: { id, band_id: session.user.id },
+    where: { id, band_id: session.user.bandId },
     include: {
       bounties: {
         include: { song: true },

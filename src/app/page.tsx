@@ -13,7 +13,7 @@ export default function Home() {
         <div className="mx-auto max-w-2xl text-center">
           <div className="mb-5 inline-flex items-center gap-2 rounded-full bg-emerald-500/10 px-4 py-1.5 text-sm font-medium text-emerald-400">
             <Zap size={14} />
-            Fans pick the setlist
+            Request songs. Fund the encore.
           </div>
 
           <h1 className="mb-4 text-3xl font-bold leading-tight tracking-tight sm:text-5xl">
@@ -50,7 +50,7 @@ export default function Home() {
       <section className="px-4 py-8">
         <div className="mx-auto max-w-5xl">
           <h2 className="mb-4 text-xs font-semibold uppercase tracking-widest text-zinc-500">
-            Shows happening now
+            Upcoming shows
           </h2>
           <NearbyShows layout="carousel" />
         </div>
@@ -97,7 +97,7 @@ export default function Home() {
             bounties.
           </p>
           <Link
-            href="/band/register"
+            href="/register"
             className="inline-flex items-center gap-2 rounded-xl bg-zinc-800 px-6 py-3 text-base font-semibold text-zinc-300 transition-opacity hover:opacity-90 active:opacity-70"
           >
             Create Band Account
@@ -116,8 +116,8 @@ export default function Home() {
             <Link href="/shows" className="hover:text-zinc-400">
               Find Shows
             </Link>
-            <Link href="/band/login" className="hover:text-zinc-400">
-              Band Login
+            <Link href="/login" className="hover:text-zinc-400">
+              Sign In
             </Link>
             <Link href="/show/demo" className="hover:text-zinc-400">
               Demo

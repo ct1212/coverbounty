@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
-import { emitToShow } from '@/lib/socket'
+import { autoEndShowIfExpired } from '@/lib/show-lifecycle'
 
 // Called by a cron job (or manually) to close shows that have ended
 // and move their open bounties into settlement window.
@@ -23,43 +23,19 @@ export async function POST(request: NextRequest) {
         status: 'live',
         end_time: { lte: thirtyMinutesAgo },
       },
-      include: {
-        bounties: {
-          where: { status: 'open' },
-        },
-      },
     })
 
     if (expiredShows.length === 0) {
       return NextResponse.json({ data: { processed: 0, message: 'No expired shows found' } })
     }
 
-    const settlementDeadline = new Date(Date.now() + 2 * 60 * 60 * 1000) // 2 hours
     const results = []
 
     for (const show of expiredShows) {
-      // Move all open bounties to settling
-      await prisma.bounty.updateMany({
-        where: { show_id: show.id, status: 'open' },
-        data: { status: 'settling', settlement_deadline: settlementDeadline },
-      })
-
-      // Move show to settling
-      const updatedShow = await prisma.show.update({
-        where: { id: show.id },
-        data: { status: 'settling', settlement_deadline: settlementDeadline },
-      })
-
-      emitToShow(show.id, 'show:settling', {
-        show: updatedShow,
-        settlement_deadline: settlementDeadline,
-        bounties_settling: show.bounties.length,
-      })
-
-      results.push({
-        show_id: show.id,
-        bounties_moved: show.bounties.length,
-      })
+      const ended = await autoEndShowIfExpired(show.id)
+      if (ended) {
+        results.push({ show_id: show.id })
+      }
     }
 
     return NextResponse.json({ data: { processed: results.length, results } })

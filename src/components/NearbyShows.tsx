@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { MapPin, Music, Users, DollarSign, Loader2, MapPinOff } from 'lucide-react'
+import { MapPin, Music, DollarSign, MapPinOff } from 'lucide-react'
 
 interface NearbyShow {
   id: string
@@ -51,12 +51,16 @@ function ShowCard({ show }: { show: NearbyShow }) {
             {formatDate(show.startTime)}
           </span>
         )}
-        <span className="flex items-center gap-1 text-xs text-zinc-500">
-          <MapPin size={11} />
-          {show.distance < 1
-            ? `${Math.round(show.distance * 1000)}m`
-            : `${show.distance}km`}
-        </span>
+        {show.distance > 0 && (
+          <span className="flex items-center gap-1 text-xs text-zinc-500">
+            <MapPin size={11} />
+            {show.distance < 1
+              ? `${Math.round(show.distance * 1000)}m`
+              : show.distance < 100
+                ? `${show.distance}km`
+                : `${Math.round(show.distance)}km`}
+          </span>
+        )}
       </div>
 
       <h3 className="truncate text-base font-bold text-white">{show.bandName}</h3>
@@ -92,31 +96,48 @@ function SkeletonCard() {
   )
 }
 
+function mapShowFromApi(s: {
+  id: string
+  band?: { name: string }
+  venue_name: string
+  venue_address: string
+  start_time: string
+  end_time: string
+  status: string
+  _count?: { bounties: number }
+}): NearbyShow {
+  return {
+    id: s.id,
+    bandName: s.band?.name ?? 'Unknown',
+    venueName: s.venue_name,
+    venueAddress: s.venue_address,
+    startTime: s.start_time,
+    endTime: s.end_time,
+    status: s.status,
+    distance: 0,
+    bountyCount: s._count?.bounties ?? 0,
+    totalPool: 0,
+  }
+}
+
 export function NearbyShows({ layout = 'carousel' }: { layout?: 'carousel' | 'grid' }) {
-  const [shows, setShows] = useState<NearbyShow[]>([])
+  const [nearbyShows, setNearbyShows] = useState<NearbyShow[]>([])
   const [allShows, setAllShows] = useState<NearbyShow[]>([])
   const [loading, setLoading] = useState(true)
   const [locationDenied, setLocationDenied] = useState(false)
 
   useEffect(() => {
-    // Fetch all upcoming shows as fallback
-    fetch('/api/shows?status=live')
+    // Fetch all shows as fallback — never show a blank page
+    fetch('/api/shows')
       .then((r) => r.json())
       .then((data) => {
         if (data.data) {
-          const mapped = data.data.map((s: { id: string; band?: { name: string }; venue_name: string; venue_address: string; start_time: string; end_time: string; status: string; _count?: { bounties: number } }) => ({
-            id: s.id,
-            bandName: s.band?.name ?? 'Unknown',
-            venueName: s.venue_name,
-            venueAddress: s.venue_address,
-            startTime: s.start_time,
-            endTime: s.end_time,
-            status: s.status,
-            distance: 0,
-            bountyCount: s._count?.bounties ?? 0,
-            totalPool: 0,
-          }))
-          setAllShows(mapped)
+          const statusOrder: Record<string, number> = { live: 0, created: 1, synced: 1, settling: 2, ended: 3 }
+          const sorted = [...data.data].sort(
+            (a: { status: string }, b: { status: string }) =>
+              (statusOrder[a.status] ?? 4) - (statusOrder[b.status] ?? 4),
+          )
+          setAllShows(sorted.map(mapShowFromApi))
         }
       })
       .catch(() => {})
@@ -130,15 +151,16 @@ export function NearbyShows({ layout = 'carousel' }: { layout?: 'carousel' | 'gr
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         try {
+          // API auto-expands radius if no results nearby
           const res = await fetch(
-            `/api/shows/nearby?lat=${pos.coords.latitude}&lng=${pos.coords.longitude}&radius=50`,
+            `/api/shows/nearby?lat=${pos.coords.latitude}&lng=${pos.coords.longitude}&radius=100`,
           )
           if (res.ok) {
             const data = await res.json()
-            setShows(data.data ?? [])
+            setNearbyShows(data.data ?? [])
           }
         } catch {
-          // silent
+          // silent — allShows fallback covers this
         } finally {
           setLoading(false)
         }
@@ -151,7 +173,8 @@ export function NearbyShows({ layout = 'carousel' }: { layout?: 'carousel' | 'gr
     )
   }, [])
 
-  const displayShows = shows.length > 0 ? shows : allShows
+  // Prefer nearby results, fall back to all active shows
+  const displayShows = nearbyShows.length > 0 ? nearbyShows : allShows
 
   if (loading) {
     return (
@@ -170,7 +193,7 @@ export function NearbyShows({ layout = 'carousel' }: { layout?: 'carousel' | 'gr
       <div className="rounded-2xl bg-zinc-900 px-6 py-10 text-center">
         <MapPinOff size={32} className="mx-auto mb-3 text-zinc-700" />
         <p className="font-medium text-zinc-400">
-          {locationDenied ? 'Location access needed to find nearby shows' : 'No shows nearby right now'}
+          {locationDenied ? 'Enable location to find shows near you' : 'No shows scheduled yet'}
         </p>
         <p className="mt-1 text-sm text-zinc-500">
           <Link href="/show/demo" className="text-emerald-400 hover:underline">
@@ -185,13 +208,13 @@ export function NearbyShows({ layout = 'carousel' }: { layout?: 'carousel' | 'gr
   if (layout === 'grid') {
     return (
       <div className="space-y-4">
-        {shows.length > 0 && (
+        {nearbyShows.length > 0 && (
           <div>
             <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-zinc-500">
               Near You
             </h2>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {shows.map((show) => (
+              {nearbyShows.map((show) => (
                 <ShowCard key={show.id} show={show} />
               ))}
             </div>
@@ -200,7 +223,7 @@ export function NearbyShows({ layout = 'carousel' }: { layout?: 'carousel' | 'gr
         {allShows.length > 0 && (
           <div>
             <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-zinc-500">
-              {shows.length > 0 ? 'All Upcoming Shows' : 'Upcoming Shows'}
+              {nearbyShows.length > 0 ? 'All Upcoming Shows' : 'Upcoming Shows'}
             </h2>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {allShows.map((show) => (

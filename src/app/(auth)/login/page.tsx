@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Music } from 'lucide-react'
 
-export default function BandLogin() {
+export default function LoginPage() {
   const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -28,7 +28,10 @@ export default function BandLogin() {
       setError('Invalid email or password')
       setLoading(false)
     } else {
-      router.push('/band')
+      // Fetch session to determine redirect
+      const res = await fetch('/api/auth/session')
+      const session = await res.json()
+      router.push(session?.user?.bandId ? '/band' : '/shows')
     }
   }
 
@@ -39,8 +42,8 @@ export default function BandLogin() {
           <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-500/15">
             <Music size={28} className="text-emerald-400" />
           </div>
-          <h1 className="text-2xl font-bold text-white">Band Login</h1>
-          <p className="mt-1 text-sm text-zinc-500">Sign in to manage your shows</p>
+          <h1 className="text-2xl font-bold text-white">Sign In</h1>
+          <p className="mt-1 text-sm text-zinc-500">Welcome back to CoverBounty</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -60,7 +63,7 @@ export default function BandLogin() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full rounded-xl bg-zinc-900 px-4 py-3 text-white placeholder-zinc-600 outline-none focus:ring-2 focus:ring-emerald-500"
-              placeholder="band@example.com"
+              placeholder="you@example.com"
             />
           </div>
 
@@ -88,8 +91,8 @@ export default function BandLogin() {
         </form>
 
         <p className="mt-6 text-center text-sm text-zinc-500">
-          New band?{' '}
-          <Link href="/band/register" className="text-emerald-400 hover:underline">
+          New here?{' '}
+          <Link href="/register" className="text-emerald-400 hover:underline">
             Create an account
           </Link>
         </p>
