@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Music, Users, Clock, Plus, BarChart2, Search, X } from 'lucide-react'
+import { Music, Users, Clock, Plus, BarChart2, Search, X, Home } from 'lucide-react'
 import { io, Socket } from 'socket.io-client'
 
 // Types
@@ -161,7 +161,7 @@ function BackModal({
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center">
       <div className="absolute inset-0 bg-black/70" onClick={onClose} />
-      <div className="relative w-full max-w-lg rounded-t-2xl bg-zinc-900 p-6 pb-10">
+      <div className="relative max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-zinc-900 p-6 pb-[max(2.5rem,env(safe-area-inset-bottom))]">
         <div className="mb-1 text-xs font-semibold uppercase tracking-widest text-zinc-500">
           Back this bounty
         </div>
@@ -296,7 +296,7 @@ function RequestSongModal({
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center">
       <div className="absolute inset-0 bg-black/70" onClick={onClose} />
-      <div className="relative w-full max-w-lg rounded-t-2xl bg-zinc-900 p-6 pb-10">
+      <div className="relative max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-zinc-900 p-6 pb-[max(2.5rem,env(safe-area-inset-bottom))]">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-bold text-white">Request a Song</h2>
           <button onClick={onClose} className="text-zinc-500 hover:text-white">
@@ -442,10 +442,10 @@ function BountyCard({
         {bounty.status === 'open' && (
           <button
             onClick={onBack}
-            className="ml-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-500 text-white active:opacity-70"
+            className="ml-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-500 text-white active:opacity-70"
             aria-label={`Back ${bounty.songTitle}`}
           >
-            <Plus size={18} />
+            <Plus size={20} />
           </button>
         )}
       </div>
@@ -549,6 +549,16 @@ export default function BountyBoard({
       {/* Sticky show header */}
       <div className="sticky top-0 z-10 border-b border-zinc-800 bg-zinc-950/95 px-4 pb-4 pt-4 backdrop-blur">
         <div className="mx-auto max-w-lg">
+          {/* Nav row */}
+          <div className="mb-2 flex items-center justify-between">
+            <a href="/" className="flex items-center gap-1.5 p-1 text-zinc-500 active:text-zinc-300">
+              <Home size={16} />
+              <span className="text-xs font-medium">CoverBounty</span>
+            </a>
+            <a href="/shows" className="p-1 text-xs font-medium text-zinc-500 active:text-zinc-300">
+              Find Shows
+            </a>
+          </div>
           <div className="flex items-center justify-between pb-2">
             {isLive ? (
               <span className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-emerald-400">

@@ -31,7 +31,7 @@ export default async function BandLayout({
               <LayoutDashboard size={16} />
               Dashboard
             </Link>
-            <span className="text-sm text-zinc-500">{session.user.name}</span>
+            <span className="hidden text-sm text-zinc-500 sm:inline">{session.user.name}</span>
             <form
               action={async () => {
                 'use server'
@@ -41,9 +41,9 @@ export default async function BandLayout({
             >
               <button
                 type="submit"
-                className="flex items-center gap-1 text-sm text-zinc-500 hover:text-red-400"
+                className="flex items-center justify-center gap-1 p-2 text-sm text-zinc-500 hover:text-red-400"
               >
-                <LogOut size={14} />
+                <LogOut size={16} />
               </button>
             </form>
           </div>
