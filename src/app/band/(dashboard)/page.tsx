@@ -2,6 +2,7 @@ import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import Link from 'next/link'
 import { Plus, MapPin, Calendar, DollarSign, Music } from 'lucide-react'
+import { ImportShows } from '@/components/ImportShows'
 
 function formatDate(date: Date) {
   return new Intl.DateTimeFormat('en-US', {
@@ -77,14 +78,17 @@ export default async function BandDashboard() {
         </div>
       </div>
 
-      {/* Create Show CTA */}
-      <Link
-        href="/band/show/new"
-        className="flex items-center justify-center gap-2 rounded-xl border-2 border-dashed border-zinc-700 py-4 text-sm font-semibold text-zinc-400 transition-colors hover:border-emerald-500 hover:text-emerald-400"
-      >
-        <Plus size={18} />
-        Create New Show
-      </Link>
+      {/* Create Show / Import */}
+      <div className="space-y-3">
+        <Link
+          href="/band/show/new"
+          className="flex items-center justify-center gap-2 rounded-xl border-2 border-dashed border-zinc-700 py-4 text-sm font-semibold text-zinc-400 transition-colors hover:border-emerald-500 hover:text-emerald-400"
+        >
+          <Plus size={18} />
+          Create New Show
+        </Link>
+        <ImportShows bandId={bandId} />
+      </div>
 
       {/* Live Shows */}
       {liveShows.length > 0 && (
