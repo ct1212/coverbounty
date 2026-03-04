@@ -3,43 +3,32 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "tsx server.ts",
+    "dev": "next dev",
     "build": "next build",
-    "start": "NODE_ENV=production tsx server.ts",
+    "start": "next start",
     "lint": "eslint",
-    "db:generate": "prisma generate",
-    "db:migrate": "prisma migrate dev",
-    "db:seed": "tsx prisma/seed.ts"
-  },
-  "prisma": {
-    "seed": "tsx prisma/seed.ts"
+    "type-check": "tsc --noEmit",
+    "deploy": "vercel --prod",
+    "deploy:preview": "vercel"
   },
   "dependencies": {
-    "@prisma/client": "^5.22.0",
-    "@socket.io/redis-adapter": "^8.3.0",
     "@stripe/react-stripe-js": "^5.6.1",
     "@stripe/stripe-js": "^8.9.0",
-    "ioredis": "^5.4.2",
     "lucide-react": "^0.576.0",
     "next": "16.1.6",
     "qrcode": "^1.5.4",
     "react": "19.2.3",
     "react-dom": "19.2.3",
-    "socket.io": "^4.8.3",
-    "socket.io-client": "^4.8.3",
-    "stripe": "^17.5.0"
+    "socket.io-client": "^4.8.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
-    "@types/qrcode": "^1.5.5",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
-    "prisma": "^5.22.0",
     "tailwindcss": "^4",
-    "tsx": "^4.19.2",
     "typescript": "^5"
   }
 }
